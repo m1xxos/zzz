@@ -10,6 +10,7 @@ import {
 import { StoreProvider, useStore } from './store/useStore';
 import { exportBackup, validateBackup, importBackup } from './services/storage';
 import TaskBoard from './components/tasks/TaskBoard';
+import DailiesBoard from './components/dailies/DailiesBoard';
 import BackupModal from './components/common/BackupModal';
 
 function MainAppShell() {
@@ -34,6 +35,11 @@ function MainAppShell() {
 
   // Handle Bangboo Mascot Poke
   const handleBangbooPoke = () => {
+    if (typeof store.triggerBangbooPoke === 'function') {
+      store.triggerBangbooPoke();
+      return;
+    }
+
     const quotes = [
       { dialect: 'Eh-nah! En-nah!', sub: 'Proxy, ready for dispatch!' },
       { dialect: 'En-na en-nah!', sub: 'Hollow zero telemetry clear!' },
@@ -189,31 +195,7 @@ function MainAppShell() {
       {/* 4. Main Viewport Container */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto pb-28">
         {activeView === 'tasks' && <TaskBoard />}
-
-        {activeView === 'dailies' && (
-          <div
-            data-testid="dailies-view"
-            className="space-y-6 bg-[#16181D] border-2 border-[#2E3342] zzz-corner-cut p-6"
-          >
-            <div className="flex items-center justify-between border-b border-[#2E3342] pb-4">
-              <div>
-                <span className="font-mono text-xs text-[#00F0FF] font-bold tracking-wider">
-                  // INTER-KNOT ROUTINE
-                </span>
-                <h2 className="text-xl font-bold uppercase">DAILY COMMISSIONS</h2>
-              </div>
-              <div className="flex items-center gap-2 font-mono text-xs bg-[#0D0E12] px-3 py-1.5 rounded-sm border border-[#2E3342]">
-                <span className="text-[#A0A5B5]">STREAK:</span>
-                <span data-testid="streak-counter" className="text-[#F2FF00] font-bold">
-                  {dailies.currentStreak} DAYS
-                </span>
-              </div>
-            </div>
-            <p className="text-sm text-[#A0A5B5] font-sans">
-              Inter-Knot Daily Commissions module ready for Milestone 3 deployment.
-            </p>
-          </div>
-        )}
+        {activeView === 'dailies' && <DailiesBoard />}
 
         {activeView === 'calendar' && (
           <div
@@ -256,17 +238,23 @@ function MainAppShell() {
                 data-testid="bangboo-dialogue"
                 className="font-comic font-black text-xs tracking-wider uppercase leading-tight"
               >
-                {bangboo.currentMood === 'celebrating'
-                  ? 'Eh-nah!! CLEARED! ★'
-                  : bangbooDialogueText}
+                {bangboo.activeDialogue?.bangbooText ||
+                  (bangboo.currentMood === 'celebrating'
+                    ? 'Eh-nah!! CLEARED! ★'
+                    : bangboo.currentMood === 'triumphant'
+                    ? 'En-nah-en!! ★★★'
+                    : bangbooDialogueText)}
               </div>
               <div
                 data-testid="bangboo-subtitle"
                 className="font-sans text-[10px] text-black/80 leading-none mt-0.5 italic"
               >
-                {bangboo.currentMood === 'celebrating'
-                  ? 'Proxy, commission successfully archived!'
-                  : bangbooSubtitleText}
+                {bangboo.activeDialogue?.translation ||
+                  (bangboo.currentMood === 'celebrating'
+                    ? 'Proxy, commission successfully archived!'
+                    : bangboo.currentMood === 'triumphant'
+                    ? 'Proxy, all daily commissions cleared! Triumphant victory!'
+                    : bangbooSubtitleText)}
               </div>
               {/* Bubble pointer caret */}
               <div className="absolute right-6 -bottom-2 w-0 h-0 border-x-4 border-x-transparent border-t-8 border-t-[#F2FF00]" />
@@ -296,7 +284,7 @@ function MainAppShell() {
               <rect x="26" y="44" width="48" height="20" rx="10" fill="#0D0E12" stroke="#00F0FF" strokeWidth="2" />
 
               {/* Eyes reacting to mood */}
-              {bangboo.currentMood === 'celebrating' || bangboo.currentMood === 'happy' ? (
+              {bangboo.currentMood === 'celebrating' || bangboo.currentMood === 'happy' || bangboo.currentMood === 'triumphant' ? (
                 <>
                   <path d="M 36 56 Q 40 48 44 56" fill="none" stroke="#F2FF00" strokeWidth="3" strokeLinecap="round" />
                   <path d="M 56 56 Q 60 48 64 56" fill="none" stroke="#F2FF00" strokeWidth="3" strokeLinecap="round" />
