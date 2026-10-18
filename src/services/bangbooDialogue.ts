@@ -375,7 +375,7 @@ export const BANGBOO_DIALOGUE_CATALOG: BangbooDialogueEntry[] = [
     translation: 'Capacitors recharged! Let’s get back to work!',
     mood: 'happy',
     soundCue: 'chirp',
-    durationMs: 3500,
+    durationMs: 3000,
     priority: 70,
   },
 

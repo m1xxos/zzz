@@ -1,6 +1,7 @@
-import type { FC } from 'react';
-import { X, Terminal, AlertTriangle } from 'lucide-react';
-import { TaskPriority } from '../../types';
+import { type FC, useContext } from 'react';
+import { X, Terminal, AlertTriangle, ArrowUpDown } from 'lucide-react';
+import { TaskPriority, TaskSortBy } from '../../types';
+import { StoreContext } from '../../store/useStore';
 
 export interface FilterBarProps {
   searchQuery: string;
@@ -11,6 +12,10 @@ export interface FilterBarProps {
   onStatusChange: (status: 'all' | 'active' | 'completed' | 'overdue') => void;
   selectedPriority?: TaskPriority | 'all';
   onPriorityChange?: (priority: TaskPriority | 'all') => void;
+  sortBy?: TaskSortBy;
+  onSortByChange?: (sortBy: TaskSortBy) => void;
+  sortDirection?: 'asc' | 'desc';
+  onSortDirectionChange?: (dir: 'asc' | 'desc') => void;
   availableCategories?: string[];
   counts?: {
     all: number;
@@ -38,10 +43,33 @@ export const FilterBar: FC<FilterBarProps> = ({
   onStatusChange,
   selectedPriority = 'all',
   onPriorityChange,
+  sortBy,
+  onSortByChange,
+  sortDirection,
+  onSortDirectionChange,
   availableCategories = DEFAULT_CATEGORIES,
   counts,
   className = '',
 }) => {
+  const storeContext = useContext(StoreContext);
+  const currentSortBy: TaskSortBy = sortBy ?? storeContext?.sortBy ?? 'createdAt';
+  const currentSortDirection: 'asc' | 'desc' = sortDirection ?? storeContext?.sortDirection ?? 'desc';
+
+  const handleSortByChange = (val: TaskSortBy) => {
+    onSortByChange?.(val);
+    if (storeContext && typeof storeContext.setSortBy === 'function') {
+      storeContext.setSortBy(val);
+    }
+  };
+
+  const handleSortDirectionToggle = () => {
+    const nextDir = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    onSortDirectionChange?.(nextDir);
+    if (storeContext && typeof storeContext.setSortDirection === 'function') {
+      storeContext.setSortDirection(nextDir);
+    }
+  };
+
   // Merge default categories with any dynamically supplied categories
   const categories = Array.from(
     new Set([...DEFAULT_CATEGORIES, ...availableCategories.map((c) => c.toUpperCase())])
@@ -109,6 +137,36 @@ export const FilterBar: FC<FilterBarProps> = ({
             ))}
           </div>
         )}
+
+        {/* Sort Controls */}
+        <div className="flex items-center gap-1.5 bg-[#16181D] px-2 py-1 border border-[#2E3342] rounded-sm">
+          <span className="text-[10px] font-mono text-[#5C6275] uppercase hidden md:inline">
+            SORT:
+          </span>
+          <select
+            data-testid="task-sort-select"
+            value={currentSortBy}
+            onChange={(e) => handleSortByChange(e.target.value as TaskSortBy)}
+            className="bg-[#0D0E12] border border-[#2E3342] text-white text-[11px] font-mono px-2 py-1 rounded-sm focus:outline-none focus:border-[#F2FF00]"
+            aria-label="Sort commissions by"
+          >
+            <option value="createdAt">CREATION DATE</option>
+            <option value="dueDate">DUE DATE</option>
+            <option value="priority">PRIORITY RANK</option>
+            <option value="title">TITLE</option>
+          </select>
+          <button
+            type="button"
+            data-testid="task-sort-dir-btn"
+            onClick={handleSortDirectionToggle}
+            title={`Sort Direction: ${currentSortDirection.toUpperCase()}`}
+            aria-label={`Toggle sort order, current: ${currentSortDirection}`}
+            className="px-2 py-1 bg-[#242831] hover:bg-[#2E3342] text-[#F2FF00] text-[11px] font-mono font-bold rounded-sm border border-[#2E3342] transition-colors flex items-center gap-1"
+          >
+            <ArrowUpDown className="w-3 h-3" />
+            <span>{currentSortDirection === 'asc' ? 'ASC' : 'DESC'}</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. Filters Row: Status Tabs & Skewed Category Pills */}

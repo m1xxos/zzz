@@ -78,7 +78,7 @@ describe('Tier 4: Real-World Application Scenarios', () => {
 
     // --- STEP 4: Modify Audio Settings ---
     await page.click('[data-testid="audio-toggle"]');
-    await page.sleep(100);
+    await page.sleep(400);
     const mutedSetting = await page.getAttribute('[data-testid="audio-toggle"]', 'data-muted');
 
     // --- STEP 5: Export Full Backup ---

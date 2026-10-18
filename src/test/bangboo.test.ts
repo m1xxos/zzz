@@ -231,7 +231,8 @@ describe('BangbooEngine State Machine', () => {
       expect(wakeState.activeDialogue?.translation).toMatch(/I’m awake|Capacitors recharged/i);
 
       // Transitions to happy then idle
-      vi.advanceTimersByTime(3000);
+      const wakeDuration = wakeState.activeDialogue?.durationMs || 3000;
+      vi.advanceTimersByTime(wakeDuration);
       expect(engine.getState().currentMood).toBe('happy');
 
       vi.advanceTimersByTime(1500);

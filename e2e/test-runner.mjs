@@ -461,12 +461,28 @@ function createReferenceServer() {
       const alertEl = document.querySelector('[data-testid="backup-error-alert"]');
       try {
         const parsed = JSON.parse(text);
-        if (!parsed || typeof parsed !== 'object' || (!parsed.tasks && !parsed.dailies)) {
+        const data = (parsed && parsed.payload) ? parsed.payload : parsed;
+        if (!data || typeof data !== 'object' || (!data.tasks && !data.dailies)) {
           alertEl.classList.remove('hidden');
           return;
         }
         alertEl.classList.add('hidden');
-        appState = parsed;
+        if (Array.isArray(data.tasks)) {
+          appState.tasks = data.tasks.map(t => {
+            const rawTitle = String(t.title || '');
+            const cleanTitle = rawTitle.split('<' + 'script').map((part, i) => {
+              if (i === 0) return part;
+              const idx = part.indexOf('</' + 'script>');
+              return idx >= 0 ? part.slice(idx + 9) : part;
+            }).join('').trim();
+            return {
+              ...t,
+              title: cleanTitle.length > 0 ? cleanTitle : '[Sanitized Commission]'
+            };
+          });
+        }
+        if (data.dailies) appState.dailies = Object.assign(appState.dailies, data.dailies);
+        if (data.settings) appState.settings = Object.assign(appState.settings, data.settings);
         saveState();
         renderTasks();
         updateDailies();
@@ -495,8 +511,7 @@ function transpileSpec(code) {
     .replace(/\bexport\s+type\s+[^;]+;/g, '')
     .replace(/\binterface\s+[A-Za-z0-9_]+\s*\{[^}]*\}/g, '')
     .replace(/\bas\s+[A-Za-z0-9_<>\[\]]+/g, '')
-    .replace(/\bas\s+any\b/g, '')
-    .replace(/<[A-Za-z0-9_, ]+>/g, '');
+    .replace(/\bas\s+any\b/g, '');
 }
 
 // Main Test Runner Pipeline
@@ -614,7 +629,8 @@ async function main() {
     { tier: 1, file: 'tier1-feature.spec.ts', title: 'Tier 1: Feature Coverage' },
     { tier: 2, file: 'tier2-boundary.spec.ts', title: 'Tier 2: Boundary & Corner Cases' },
     { tier: 3, file: 'tier3-combination.spec.ts', title: 'Tier 3: Cross-Feature Combinations' },
-    { tier: 4, file: 'tier4-scenarios.spec.ts', title: 'Tier 4: Real-World Scenarios' }
+    { tier: 4, file: 'tier4-scenarios.spec.ts', title: 'Tier 4: Real-World Scenarios' },
+    { tier: 5, file: 'tier5-adversarial.spec.ts', title: 'Tier 5: Adversarial Coverage Hardening' }
   ].filter((s) => !targetTier || s.tier === targetTier);
 
   console.log(`\n\x1b[1mExecuting ${specFiles.length} Test Tier Suites...\x1b[0m\n`);

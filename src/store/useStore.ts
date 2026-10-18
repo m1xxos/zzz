@@ -1262,6 +1262,18 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({
     const nextMuted = !stateRef.current.settings.audio.muted;
     soundService.setMuted(nextMuted);
 
+    stateRef.current = {
+      ...stateRef.current,
+      settings: {
+        ...stateRef.current.settings,
+        audio: {
+          ...stateRef.current.settings.audio,
+          muted: nextMuted,
+        },
+      },
+    };
+    saveState(stateRef.current);
+
     setState((prev) => ({
       ...prev,
       settings: {
@@ -1278,6 +1290,18 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({
   const setAudioVolume = useCallback((volume: number) => {
     const clamped = Math.max(0, Math.min(1, volume));
     soundService.setVolume(clamped);
+
+    stateRef.current = {
+      ...stateRef.current,
+      settings: {
+        ...stateRef.current.settings,
+        audio: {
+          ...stateRef.current.settings.audio,
+          volume: clamped,
+        },
+      },
+    };
+    saveState(stateRef.current);
 
     setState((prev) => ({
       ...prev,
@@ -1369,6 +1393,11 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({
   // ==========================================================================
 
   const importState = useCallback((newState: AppState) => {
+    stateRef.current = newState;
+    if (newState.settings?.audio) {
+      soundService.setMuted(newState.settings.audio.muted);
+      soundService.setVolume(newState.settings.audio.volume);
+    }
     setState(newState);
     saveState(newState);
   }, []);

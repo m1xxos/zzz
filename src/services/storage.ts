@@ -208,10 +208,12 @@ export function sanitizeInput(input: unknown): string {
 }
 
 function sanitizeTask(task: Task): Task {
+  const sanitizedTitle = sanitizeInput(task.title);
+  const title = sanitizedTitle.length > 0 ? sanitizedTitle : '[Sanitized Commission]';
   return {
     ...task,
     id: String(task.id || ''),
-    title: sanitizeInput(task.title),
+    title,
     description: sanitizeInput(task.description),
     category: sanitizeInput(task.category || 'General'),
     priority: (['S', 'A', 'B', 'C'].includes(task.priority) ? task.priority : 'B') as TaskPriority,
@@ -246,6 +248,10 @@ export function loadState(): AppState {
       raw = memoryFallbackStore[STORAGE_KEY] || null;
     }
 
+    if (!raw && memoryFallbackStore[STORAGE_KEY]) {
+      raw = memoryFallbackStore[STORAGE_KEY];
+    }
+
     if (!raw) {
       return defaults;
     }
@@ -255,10 +261,14 @@ export function loadState(): AppState {
       return defaults;
     }
 
+    const validViews = ['tasks', 'dailies', 'calendar'];
+    const activeView = validViews.includes(parsed.activeView) ? parsed.activeView : 'tasks';
+
     // Deep merge to guarantee schema compliance
     const merged: AppState = {
       ...defaults,
       ...parsed,
+      activeView,
       version: typeof parsed.version === 'string' ? parsed.version : CURRENT_SCHEMA_VERSION,
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks.map(sanitizeTask) : [],
       dailies: {

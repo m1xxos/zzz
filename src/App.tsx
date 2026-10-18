@@ -6,6 +6,7 @@ import {
   Calendar as CalendarIcon,
   CheckSquare,
   Clock,
+  Tv,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './store/useStore';
 import { exportBackup, validateBackup, importBackup } from './services/storage';
@@ -27,6 +28,8 @@ function MainAppShell() {
     setActiveView,
     settings,
     toggleAudioMute,
+    setAudioVolume,
+    updateSettings,
     bangboo,
     setBangbooMood,
     tasks,
@@ -96,8 +99,41 @@ function MainAppShell() {
           </span>
         </div>
 
-        {/* Right: Audio Toggle & Backup Modal Buttons */}
-        <div className="flex items-center space-x-2.5">
+        {/* Right: Audio Toggle, Volume Slider, CRT Toggle & Backup Modal Buttons */}
+        <div className="flex items-center space-x-2">
+          {/* Audio Volume Slider */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-[#16181D] border border-[#2E3342] rounded-sm">
+            <span className="font-mono text-[10px] text-[#A0A5B5] tracking-wider">VOL</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={settings.audio.volume}
+              onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+              className="w-16 h-1.5 bg-[#242831] accent-[#F2FF00] rounded-sm cursor-pointer"
+              title={`Volume: ${Math.round(settings.audio.volume * 100)}%`}
+              aria-label="SFX volume slider"
+            />
+          </div>
+
+          {/* CRT Scanlines User Toggle Button */}
+          <button
+            type="button"
+            data-testid="crt-toggle"
+            onClick={() => updateSettings({ visual: { ...settings.visual, crtOverlay: !settings.visual.crtOverlay } })}
+            title={settings.visual.crtOverlay ? 'Disable CRT Scanlines' : 'Enable CRT Scanlines'}
+            aria-label="Toggle CRT Scanline Overlay"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-sm border font-mono text-xs tracking-wider transition-colors ${
+              settings.visual.crtOverlay
+                ? 'bg-[#16181D] border-[#00F0FF] text-[#00F0FF]'
+                : 'bg-[#242831] border-[#4A5268] text-[#A0A5B5]'
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline font-bold">CRT: {settings.visual.crtOverlay ? 'ON' : 'OFF'}</span>
+          </button>
+
           {/* Audio Mute Toggle Button */}
           <button
             type="button"

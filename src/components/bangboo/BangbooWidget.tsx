@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Minus, Maximize2 } from 'lucide-react';
 import { BangbooMood, BangbooDialogue, BangbooPreferences } from '../../types';
 import SpeechBubble from './SpeechBubble';
@@ -162,6 +162,14 @@ export const BangbooWidget: React.FC<BangbooWidgetProps> = ({
   const [internalMinimized, setInternalMinimized] = useState(preferences?.minimized ?? false);
   const [isPoking, setIsPoking] = useState(false);
   const pokeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pokeTimeoutRef.current) {
+        clearTimeout(pokeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isMinimized = preferences?.minimized ?? internalMinimized;
   const position = preferences?.position ?? 'bottom-right';

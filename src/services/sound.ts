@@ -112,14 +112,45 @@ export class SoundEngine {
   }
 
   public setVolume(vol: number): void {
+    if (typeof vol !== 'number' || Number.isNaN(vol)) {
+      vol = 0.8;
+    }
     this.volume = Math.max(0, Math.min(1, vol));
     if (this.masterGain && this.ctx && !this.muted) {
-      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      try {
+        this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      } catch {}
     }
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         window.localStorage.setItem(AUDIO_VOLUME_KEY, String(this.volume));
       } catch {}
+    }
+  }
+
+  public playSound(
+    name: 'click' | 'switch' | 'taskComplete' | 'commissionComplete' | 'alert' | 'chirp' | 'cheer' | 'sleep' | string,
+    customVolume?: number
+  ): void {
+    switch (name) {
+      case 'click':
+        return this.playClick(customVolume);
+      case 'switch':
+        return this.playSwitch(customVolume);
+      case 'taskComplete':
+        return this.playTaskComplete(customVolume);
+      case 'commissionComplete':
+        return this.playCommissionComplete(customVolume);
+      case 'alert':
+        return this.playAlert(customVolume);
+      case 'chirp':
+        return this.playBangbooChirp(customVolume);
+      case 'cheer':
+        return this.playBangbooCheer(customVolume);
+      case 'sleep':
+        return this.playBangbooSleep(customVolume);
+      default:
+        return this.playClick(customVolume);
     }
   }
 

@@ -56,8 +56,11 @@ describe('Tier 3: Cross-Feature Combinations', () => {
     await page.click('[data-testid="tab-calendar"]');
     await page.waitForSelector('[data-testid="calendar-view"]');
     if (await page.isVisible(todayCellSelector)) {
-      await page.click(todayCellSelector);
-      await page.sleep(100);
+      const isDrawerOpen = await page.isVisible('[data-testid="date-drawer"]');
+      if (!isDrawerOpen) {
+        await page.click(todayCellSelector);
+        await page.sleep(100);
+      }
       const updatedDrawer = await page.textContent('[data-testid="date-drawer"]');
       expect(updatedDrawer).toContain('Secure Hollow Zero Data Vault');
     }

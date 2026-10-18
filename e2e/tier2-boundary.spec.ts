@@ -79,6 +79,12 @@ describe('Tier 2: Boundary & Corner Cases', () => {
         const past = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
         if (state.dailies) {
           state.dailies.lastReset = past;
+          if (Array.isArray(state.dailies.commissions)) {
+            state.dailies.commissions.forEach((c) => {
+              c.completedDates = ['2026-10-16'];
+              c.status = 'PENDING';
+            });
+          }
         }
         localStorage.setItem('zzztasks_state', JSON.stringify(state));
       }

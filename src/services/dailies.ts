@@ -137,7 +137,7 @@ export function parseDateString(dateStr: string): { year: number; month: number;
  */
 export function getPreviousDateString(dateStr: string): string {
   const parsed = parseDateString(dateStr);
-  if (!parsed) return dateStr;
+  if (!parsed) return '';
   const d = new Date(parsed.year, parsed.month - 1, parsed.day, 12, 0, 0, 0);
   d.setDate(d.getDate() - 1);
   return formatDateString(d.getFullYear(), d.getMonth() + 1, d.getDate());
@@ -302,22 +302,37 @@ export function calculateStreak(
   // 1. Current Streak Calculation
   let currentStreak = 0;
   let checkDate: string;
+  let loopCount = 0;
 
-  if (Boolean(history[today])) {
+  if (Boolean(today) && Object.prototype.hasOwnProperty.call(history, today) && history[today] === true) {
     // Today completed: chain includes today
     currentStreak = 1;
     checkDate = getPreviousDateString(today);
-    while (Boolean(history[checkDate])) {
+    while (
+      Boolean(checkDate) &&
+      Object.prototype.hasOwnProperty.call(history, checkDate) &&
+      history[checkDate] === true &&
+      loopCount++ < 10000
+    ) {
       currentStreak++;
       checkDate = getPreviousDateString(checkDate);
     }
-  } else {
+  } else if (Boolean(today)) {
     // Today pending: check if yesterday was completed
     const yesterday = getPreviousDateString(today);
-    if (Boolean(history[yesterday])) {
+    if (
+      Boolean(yesterday) &&
+      Object.prototype.hasOwnProperty.call(history, yesterday) &&
+      history[yesterday] === true
+    ) {
       currentStreak = 1;
       checkDate = getPreviousDateString(yesterday);
-      while (Boolean(history[checkDate])) {
+      while (
+        Boolean(checkDate) &&
+        Object.prototype.hasOwnProperty.call(history, checkDate) &&
+        history[checkDate] === true &&
+        loopCount++ < 10000
+      ) {
         currentStreak++;
         checkDate = getPreviousDateString(checkDate);
       }
@@ -407,10 +422,9 @@ export function checkAndPerformDailyReset(
     : INTER_KNOT_PRESET_COMMISSIONS.map((c) => ({ ...c }));
 
   const updatedCommissions = currentCommissions.map((commission) => {
-    const isCompletedToday = Array.isArray(commission.completedDates) && commission.completedDates.includes(currentCycleDate);
     return {
       ...commission,
-      status: (isCompletedToday ? 'COMPLETED' : 'PENDING') as CommissionStatus,
+      status: 'PENDING' as CommissionStatus,
     };
   });
 
