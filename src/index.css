@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   ZZZ DESIGN SYSTEM ROOT TOKENS
+   ========================================================================== */
+:root {
+  /* Surface & Viewport Backgrounds */
+  --zzz-obsidian: #0D0E12;
+  --zzz-surface: #16181D;
+  --zzz-surface-hover: #1E2127;
+  --zzz-elevated: #242831;
+  --zzz-border: #2E3342;
+  --zzz-border-bright: #4A5268;
+
+  /* High-Voltage Accents */
+  --zzz-yellow: #F2FF00;
+  --zzz-yellow-dim: #CBE300;
+  --zzz-danger: #FF3B30;
+  --zzz-orange: #FF7700;
+  --zzz-cyan: #00F0FF;
+  --zzz-purple: #B33BFF;
+
+  /* Typography */
+  --zzz-text: #FFFFFF;
+  --zzz-text-secondary: #A0A5B5;
+  --zzz-text-muted: #5C6275;
+}
+
+/* ==========================================================================
+   BASE RESETS & GLOBAL HUD ATMOSPHERE
+   ========================================================================== */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--zzz-obsidian);
+  color: var(--zzz-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom ZZZ HUD Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--zzz-obsidian);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--zzz-border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--zzz-yellow);
+}
+
+/* Selection Color */
+::selection {
+  background-color: var(--zzz-yellow);
+  color: var(--zzz-obsidian);
+}
+
+/* ==========================================================================
+   ZZZ UTILITY CLASSES
+   ========================================================================== */
+
+/* 1. Chamfered Corner Cuts */
+/* Single top-right 12px cut */
+.zzz-corner-cut {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Diagonal cut (top-right and bottom-left) */
+.zzz-corner-cut-diagonal {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
+}
+
+/* Bottom-right 12px cut */
+.zzz-corner-cut-br {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    0 100%
+  );
+}
+
+/* 2. Street Hazard Caution Stripes */
+/* Standard Electric Yellow Hazard Bar */
+.zzz-hazard-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #F2FF00,
+    #F2FF00 10px,
+    #0D0E12 10px,
+    #0D0E12 20px
+  );
+}
+
+/* Red / Emergency Hazard Bar */
+.zzz-hazard-bar-danger {
+  background: repeating-linear-gradient(
+    -45deg,
+    #FF3B30,
+    #FF3B30 10px,
+    #0D0E12 10px,
+    #0D0E12 20px
+  );
+}
+
+/* Cyber Cyan Hazard Bar */
+.zzz-hazard-bar-cyan {
+  background: repeating-linear-gradient(
+    -45deg,
+    #00F0FF,
+    #00F0FF 10px,
+    #0D0E12 10px,
+    #0D0E12 20px
+  );
+}
+
+/* 3. CRT Scanlines & Screen Texture */
+/* Container background scanline texture */
+.zzz-scanlines {
+  background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.28) 50%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.03),
+      rgba(0, 255, 0, 0.01),
+      rgba(0, 255, 0, 0.03)
+    );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Full-viewport CRT Overlay */
+.zzz-crt-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.25) 50%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.03),
+      rgba(0, 255, 0, 0.01),
+      rgba(0, 255, 0, 0.03)
+    );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Subtle CRT Edge Vignette */
+.zzz-crt-vignette {
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+/* 4. Chromatic Aberration Text Glitch */
+.zzz-text-glitch {
+  display: inline-block;
+  transition: text-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.zzz-text-glitch:hover,
+.zzz-text-glitch:focus {
+  text-shadow: -2px 0 #00F0FF, 2px 0 #FF3B30;
+  animation: glitch 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.zzz-text-glitch-active {
+  text-shadow: -2px 0 #00F0FF, 2px 0 #FF3B30;
+  animation: glitch 0.25s infinite;
+}
+
+/* Slanted HUD Header Badge */
+.zzz-badge-slanted {
+  transform: skewX(-12deg);
+}
+.zzz-badge-slanted > * {
+  transform: skewX(12deg);
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: REDUCED MOTION SAFEGUARDS
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .zzz-crt-overlay,
+  .zzz-scanlines {
+    background: none !important;
+  }
+}
