@@ -39,9 +39,11 @@ jobs:
         run: npm test
 
       - name: Build static distribution
-        run: npm run build
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
         env:
-          VITE_BASE_PATH: "./"
+          VITE_BASE_PATH: "/zzz/"
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

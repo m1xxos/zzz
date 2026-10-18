@@ -6,8 +6,8 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Supports GitHub Pages repository subpaths and root hosting via relative base
-  base: process.env.VITE_BASE_PATH || './',
+  // Configured for GitHub Pages deployment at https://m1xxos.github.io/zzz
+  base: process.env.VITE_BASE_PATH || '/zzz/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
