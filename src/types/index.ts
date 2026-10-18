@@ -203,6 +203,40 @@ export interface AppState {
   sortBy: TaskSortBy; // Sorting key
   sortDirection: SortDirection; // Sorting direction
   currentMonthOffset: number; // Month offset for calendar view (-1, 0, +1, etc.)
+  // Milestone 4: Calendar Matrix & Schedule View
+  selectedCalendarDate?: string | null; // Date inspected in drawer or null
+  calendarViewYear?: number; // Active viewing year (e.g. 2026)
+  calendarViewMonth?: number; // Active viewing month (1-12)
+}
+
+// ============================================================================
+// 5b. Calendar Metadata & Slices
+// ============================================================================
+
+export interface PriorityCounts {
+  S: number;
+  A: number;
+  B: number;
+  C: number;
+}
+
+export interface DateMetadata {
+  /** Total number of tasks scheduled for this date (dueDate === date) */
+  taskCount: number;
+  /** Breakdown of task count per ZZZ priority rank */
+  priorityCounts: PriorityCounts;
+  /** True if taskCount > 0 and all scheduled tasks on this date are marked completed */
+  isAllCompleted: boolean;
+  /** True if daily commissions were completed/claimed on this cycle date (drives daily-complete-dot) */
+  hasDailyCompleted: boolean;
+  /** Convenience flag: taskCount > 0 */
+  hasTasks: boolean;
+  /** Number of completed tasks on this date */
+  completedCount: number;
+  /** Number of pending / active tasks on this date */
+  activeCount: number;
+  /** List of tasks scheduled for this date, sorted (active first, then S > A > B > C, then newest) */
+  tasks: Task[];
 }
 
 // ============================================================================

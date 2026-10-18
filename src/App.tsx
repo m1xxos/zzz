@@ -12,6 +12,7 @@ import { exportBackup, validateBackup, importBackup } from './services/storage';
 import TaskBoard from './components/tasks/TaskBoard';
 import DailiesBoard from './components/dailies/DailiesBoard';
 import BackupModal from './components/common/BackupModal';
+import CalendarMatrix from './components/calendar/CalendarMatrix';
 
 function MainAppShell() {
   const store = useStore();
@@ -200,19 +201,9 @@ function MainAppShell() {
         {activeView === 'calendar' && (
           <div
             data-testid="calendar-view"
-            className="space-y-6 bg-[#16181D] border-2 border-[#2E3342] zzz-corner-cut p-6"
+            className="space-y-6"
           >
-            <div className="flex items-center justify-between border-b border-[#2E3342] pb-4">
-              <div>
-                <span className="font-mono text-xs text-[#B33BFF] font-bold tracking-wider">
-                  // TIMELINE MATRIX
-                </span>
-                <h2 className="text-xl font-bold uppercase">SCHEDULE MATRIX</h2>
-              </div>
-            </div>
-            <p className="text-sm text-[#A0A5B5] font-sans">
-              Calendar Matrix & Date Drawer module ready for Milestone 4 deployment.
-            </p>
+            <CalendarMatrix />
           </div>
         )}
       </main>

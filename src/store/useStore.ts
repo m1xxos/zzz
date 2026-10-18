@@ -31,6 +31,8 @@ import {
   DailyCommission,
   DailiesState,
   CommissionReward,
+  DateMetadata,
+  PriorityCounts,
 } from '../types';
 import { loadState, saveState, getDefaultState } from '../services/storage';
 import {
@@ -110,6 +112,18 @@ export interface StoreContextType extends AppState {
   setActiveView: (view: ActiveView) => void;
   setSelectedDate: (date: string) => void;
   setCurrentMonthOffset: (offset: number) => void;
+
+  // Milestone 4: Calendar Matrix State & Actions
+  selectedCalendarDate: string | null;
+  calendarViewYear: number;
+  calendarViewMonth: number;
+  setSelectedCalendarDate: (date: string | null) => void;
+  setCalendarViewMonth: (year: number, month: number) => void;
+  prevCalendarMonth: () => void;
+  nextCalendarMonth: () => void;
+  resetCalendarToToday: () => void;
+  getTasksForDate: (date: string) => Task[];
+  getDateMetadata: (date: string) => DateMetadata;
 
   // Settings & Audio Actions
   updateSettings: (updates: Partial<AppSettings>) => void;
@@ -288,6 +302,147 @@ export function filterAndSortTasks(
       // Tertiary tie-breaker: newest createdAt first
       return b.createdAt.localeCompare(a.createdAt);
     });
+}
+
+// ============================================================================
+// Milestone 4: Calendar Domain Helpers & Selectors
+// ============================================================================
+
+export const MONTH_NAMES_EN = [
+  'JANUARY',
+  'FEBRUARY',
+  'MARCH',
+  'APRIL',
+  'MAY',
+  'JUNE',
+  'JULY',
+  'AUGUST',
+  'SEPTEMBER',
+  'OCTOBER',
+  'NOVEMBER',
+  'DECEMBER',
+] as const;
+
+export function normalizeYearMonth(year: number, month: number): { year: number; month: number } {
+  const y = Math.floor(Number.isFinite(year) ? year : new Date().getFullYear());
+  const m = Math.floor(Number.isFinite(month) ? month : new Date().getMonth() + 1);
+
+  const totalMonths = y * 12 + (m - 1);
+  const normYear = Math.floor(totalMonths / 12);
+  const normMonth = ((totalMonths % 12) + 12) % 12 + 1;
+
+  return { year: normYear, month: normMonth };
+}
+
+export function getPreviousMonthYear(year: number, month: number): { year: number; month: number } {
+  return normalizeYearMonth(year, month - 1);
+}
+
+export function getNextMonthYear(year: number, month: number): { year: number; month: number } {
+  return normalizeYearMonth(year, month + 1);
+}
+
+export function formatMonthReadout(year: number, month: number): string {
+  const norm = normalizeYearMonth(year, month);
+  const yStr = String(norm.year);
+  const mStr = String(norm.month).padStart(2, '0');
+  const name = MONTH_NAMES_EN[norm.month - 1] || 'UNKNOWN';
+  return `${yStr}.${mStr} // ${name}`;
+}
+
+export function calculateMonthOffset(
+  targetYear: number,
+  targetMonth: number,
+  baseDate: Date = new Date()
+): number {
+  const baseYear = baseDate.getFullYear();
+  const baseMonth = baseDate.getMonth() + 1;
+  return (targetYear - baseYear) * 12 + (targetMonth - baseMonth);
+}
+
+export function computeTasksForDate(tasks: Task[], date: string | null | undefined): Task[] {
+  if (!date || typeof date !== 'string') return [];
+  const trimmed = date.trim();
+  if (!trimmed) return [];
+
+  const matched = tasks.filter((t) => t.dueDate === trimmed);
+  const priorityOrder: Record<TaskPriority, number> = { S: 0, A: 1, B: 2, C: 3 };
+
+  return matched.slice().sort((a, b) => {
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+    const pA = priorityOrder[a.priority] ?? 2;
+    const pB = priorityOrder[b.priority] ?? 2;
+    if (pA !== pB) return pA - pB;
+    const createdA = a.createdAt || '';
+    const createdB = b.createdAt || '';
+    if (createdA !== createdB) {
+      return createdB.localeCompare(createdA);
+    }
+    return (b.id || '').localeCompare(a.id || '');
+  });
+}
+
+export function computeDateMetadata(
+  tasks: Task[] = [],
+  dailies: DailiesState | undefined,
+  date: string | null | undefined,
+  currentCycleDate?: string
+): DateMetadata {
+  const targetDate = (date || '').trim();
+  if (!targetDate) {
+    return {
+      taskCount: 0,
+      priorityCounts: { S: 0, A: 0, B: 0, C: 0 },
+      isAllCompleted: false,
+      hasDailyCompleted: false,
+      hasTasks: false,
+      completedCount: 0,
+      activeCount: 0,
+      tasks: [],
+    };
+  }
+
+  const tasksForDate = computeTasksForDate(tasks, targetDate);
+  const taskCount = tasksForDate.length;
+  const priorityCounts: PriorityCounts = { S: 0, A: 0, B: 0, C: 0 };
+  let completedCount = 0;
+
+  for (const t of tasksForDate) {
+    if (t.priority && t.priority in priorityCounts) {
+      priorityCounts[t.priority]++;
+    } else {
+      priorityCounts.B++;
+    }
+    if (t.completed) {
+      completedCount++;
+    }
+  }
+
+  const isAllCompleted = taskCount > 0 && completedCount === taskCount;
+
+  const hasHistory = Boolean(dailies?.history && dailies.history[targetDate] === true);
+  const isCurrentCycle = Boolean(currentCycleDate && targetDate === currentCycleDate);
+  const hasClaimedToday = Boolean(isCurrentCycle && dailies?.commissionClaimed);
+  const hasInCommissions = Boolean(
+    dailies?.commissions?.some(
+      (c) => Array.isArray(c.completedDates) && c.completedDates.includes(targetDate)
+    )
+  );
+
+  const hasDailyCompleted = hasHistory || hasClaimedToday || hasInCommissions;
+
+  return {
+    taskCount,
+    priorityCounts,
+    isAllCompleted,
+    hasDailyCompleted,
+    hasTasks: taskCount > 0,
+    completedCount,
+    activeCount: taskCount - completedCount,
+    tasks: tasksForDate,
+  };
 }
 
 // ============================================================================
@@ -1000,6 +1155,73 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({
   }, []);
 
   // ==========================================================================
+  // Milestone 4: Calendar Matrix Actions & Selectors
+  // ==========================================================================
+
+  const setSelectedCalendarDate = useCallback((date: string | null) => {
+    const formatted = date ? date.trim() : null;
+    setState((prev) => ({
+      ...prev,
+      selectedCalendarDate: formatted,
+      ...(formatted ? { selectedDate: formatted } : {}),
+    }));
+  }, []);
+
+  const setCalendarViewMonth = useCallback((year: number, month: number) => {
+    const { year: y, month: m } = normalizeYearMonth(year, month);
+    const offset = calculateMonthOffset(y, m);
+    setState((prev) => ({
+      ...prev,
+      calendarViewYear: y,
+      calendarViewMonth: m,
+      currentMonthOffset: offset,
+    }));
+  }, []);
+
+  const prevCalendarMonth = useCallback(() => {
+    setState((prev) => {
+      const curYear = prev.calendarViewYear ?? new Date().getFullYear();
+      const curMonth = prev.calendarViewMonth ?? (new Date().getMonth() + 1);
+      const { year: nextY, month: nextM } = getPreviousMonthYear(curYear, curMonth);
+      const offset = calculateMonthOffset(nextY, nextM);
+      return {
+        ...prev,
+        calendarViewYear: nextY,
+        calendarViewMonth: nextM,
+        currentMonthOffset: offset,
+      };
+    });
+  }, []);
+
+  const nextCalendarMonth = useCallback(() => {
+    setState((prev) => {
+      const curYear = prev.calendarViewYear ?? new Date().getFullYear();
+      const curMonth = prev.calendarViewMonth ?? (new Date().getMonth() + 1);
+      const { year: nextY, month: nextM } = getNextMonthYear(curYear, curMonth);
+      const offset = calculateMonthOffset(nextY, nextM);
+      return {
+        ...prev,
+        calendarViewYear: nextY,
+        calendarViewMonth: nextM,
+        currentMonthOffset: offset,
+      };
+    });
+  }, []);
+
+  const resetCalendarToToday = useCallback(() => {
+    const now = new Date();
+    const todayIso = new Date().toISOString().split('T')[0];
+    setState((prev) => ({
+      ...prev,
+      calendarViewYear: now.getFullYear(),
+      calendarViewMonth: now.getMonth() + 1,
+      currentMonthOffset: 0,
+      selectedDate: todayIso,
+      selectedCalendarDate: null,
+    }));
+  }, []);
+
+  // ==========================================================================
   // Settings & Audio Actions
   // ==========================================================================
 
@@ -1258,6 +1480,20 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({
     return getTimeUntilReset(state.settings?.resetHour ?? 4, new Date());
   }, [state.settings?.resetHour]);
 
+  const getTasksForDate = useCallback(
+    (date: string): Task[] => {
+      return computeTasksForDate(state.tasks, date);
+    },
+    [state.tasks]
+  );
+
+  const getDateMetadata = useCallback(
+    (date: string): DateMetadata => {
+      return computeDateMetadata(state.tasks, state.dailies, date, currentCycleDate);
+    },
+    [state.tasks, state.dailies, currentCycleDate]
+  );
+
   const contextValue: StoreContextType = {
     ...state,
     createTask,
@@ -1279,6 +1515,16 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({
     setActiveView,
     setSelectedDate,
     setCurrentMonthOffset,
+    selectedCalendarDate: state.selectedCalendarDate ?? null,
+    calendarViewYear: state.calendarViewYear ?? new Date().getFullYear(),
+    calendarViewMonth: state.calendarViewMonth ?? (new Date().getMonth() + 1),
+    setSelectedCalendarDate,
+    setCalendarViewMonth,
+    prevCalendarMonth,
+    nextCalendarMonth,
+    resetCalendarToToday,
+    getTasksForDate,
+    getDateMetadata,
     updateSettings,
     toggleAudioMute,
     setAudioVolume,

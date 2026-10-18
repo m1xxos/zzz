@@ -138,6 +138,9 @@ export function getDefaultState(): AppState {
     sortBy: 'createdAt',
     sortDirection: 'desc',
     currentMonthOffset: 0,
+    selectedCalendarDate: null,
+    calendarViewYear: new Date().getFullYear(),
+    calendarViewMonth: new Date().getMonth() + 1,
   };
 }
 
@@ -309,6 +312,18 @@ export function loadState(): AppState {
         ...defaults.bangboo,
         ...(parsed.bangboo && typeof parsed.bangboo === 'object' ? parsed.bangboo : {}),
       },
+      selectedCalendarDate:
+        typeof parsed.selectedCalendarDate === 'string'
+          ? sanitizeInput(parsed.selectedCalendarDate)
+          : null,
+      calendarViewYear:
+        typeof parsed.calendarViewYear === 'number' && Number.isFinite(parsed.calendarViewYear)
+          ? parsed.calendarViewYear
+          : defaults.calendarViewYear,
+      calendarViewMonth:
+        typeof parsed.calendarViewMonth === 'number' && parsed.calendarViewMonth >= 1 && parsed.calendarViewMonth <= 12
+          ? parsed.calendarViewMonth
+          : defaults.calendarViewMonth,
     };
 
     return merged;
