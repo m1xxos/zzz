@@ -13,6 +13,8 @@ import TaskBoard from './components/tasks/TaskBoard';
 import DailiesBoard from './components/dailies/DailiesBoard';
 import BackupModal from './components/common/BackupModal';
 import CalendarMatrix from './components/calendar/CalendarMatrix';
+import BangbooWidget from './components/bangboo/BangbooWidget';
+import ScanlineOverlay from './components/layout/ScanlineOverlay';
 
 function MainAppShell() {
   const store = useStore();
@@ -76,9 +78,7 @@ function MainAppShell() {
   return (
     <div className="min-h-screen bg-[#0D0E12] text-white flex flex-col font-['Chakra_Petch',sans-serif] selection:bg-[#F2FF00] selection:text-[#0D0E12] relative overflow-x-hidden">
       {/* 1. CRT Scanlines & Visual Texture Overlay */}
-      {settings.visual.crtOverlay && (
-        <div data-testid="crt-overlay" className="zzz-crt-overlay" />
-      )}
+      <ScanlineOverlay enabled={settings.visual.crtOverlay} />
 
       {/* 2. Top Inter-Knot OSD Header */}
       <header className="border-b-2 border-[#2E3342] bg-[#16181D] px-4 sm:px-6 py-3 flex items-center justify-between z-10 shadow-lg">
@@ -210,93 +210,19 @@ function MainAppShell() {
 
       {/* 5. Interactive Cute Bangboo Mascot Companion Widget */}
       {settings.bangboo.enabled && (
-        <div
-          data-testid="bangboo-mascot"
-          data-mood={bangboo.currentMood}
-          onClick={handleBangbooPoke}
-          className="fixed bottom-4 right-4 z-40 flex flex-col items-end cursor-pointer group select-none transition-transform hover:scale-105 active:scale-95"
-          title="Click to interact with Eous!"
-        >
-          {/* Comic Dialogue Bubble */}
-          {(bangboo.currentMood !== 'idle' || true) && (
-            <div
-              data-testid="bangboo-speech-bubble"
-              className={`mb-2 bg-[#F2FF00] text-[#0D0E12] border-2 border-black rounded-lg px-3 py-1.5 shadow-[4px_4px_0px_#000000] relative max-w-[220px] transition-all duration-200 ${
-                bangboo.currentMood !== 'idle' ? 'animate-bounce opacity-100' : 'opacity-90 group-hover:opacity-100'
-              }`}
-            >
-              <div
-                data-testid="bangboo-dialogue"
-                className="font-comic font-black text-xs tracking-wider uppercase leading-tight"
-              >
-                {bangboo.activeDialogue?.bangbooText ||
-                  (bangboo.currentMood === 'celebrating'
-                    ? 'Eh-nah!! CLEARED! ★'
-                    : bangboo.currentMood === 'triumphant'
-                    ? 'En-nah-en!! ★★★'
-                    : bangbooDialogueText)}
-              </div>
-              <div
-                data-testid="bangboo-subtitle"
-                className="font-sans text-[10px] text-black/80 leading-none mt-0.5 italic"
-              >
-                {bangboo.activeDialogue?.translation ||
-                  (bangboo.currentMood === 'celebrating'
-                    ? 'Proxy, commission successfully archived!'
-                    : bangboo.currentMood === 'triumphant'
-                    ? 'Proxy, all daily commissions cleared! Triumphant victory!'
-                    : bangbooSubtitleText)}
-              </div>
-              {/* Bubble pointer caret */}
-              <div className="absolute right-6 -bottom-2 w-0 h-0 border-x-4 border-x-transparent border-t-8 border-t-[#F2FF00]" />
-            </div>
-          )}
-
-          {/* Scalable Bangboo SVG Mascot (Eous Avatar) */}
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#16181D] border-2 border-[#F2FF00] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(242,255,0,0.35)] relative overflow-hidden">
-            <svg
-              data-testid="bangboo-svg"
-              viewBox="0 0 100 100"
-              className="w-14 h-14 sm:w-16 sm:h-16 transform group-hover:rotate-6 transition-transform"
-            >
-              {/* Ears */}
-              <rect x="25" y="10" width="14" height="26" rx="7" fill="#242831" stroke="#F2FF00" strokeWidth="3" />
-              <rect x="61" y="10" width="14" height="26" rx="7" fill="#242831" stroke="#F2FF00" strokeWidth="3" />
-              <rect x="28" y="16" width="8" height="14" rx="4" fill="#F2FF00" />
-              <rect x="64" y="16" width="8" height="14" rx="4" fill="#F2FF00" />
-
-              {/* Main Body */}
-              <ellipse cx="50" cy="62" rx="36" ry="32" fill="#242831" stroke="#2E3342" strokeWidth="4" />
-
-              {/* White Belly Patch */}
-              <ellipse cx="50" cy="66" rx="22" ry="20" fill="#FFFFFF" />
-
-              {/* Visor / Eye Display */}
-              <rect x="26" y="44" width="48" height="20" rx="10" fill="#0D0E12" stroke="#00F0FF" strokeWidth="2" />
-
-              {/* Eyes reacting to mood */}
-              {bangboo.currentMood === 'celebrating' || bangboo.currentMood === 'happy' || bangboo.currentMood === 'triumphant' ? (
-                <>
-                  <path d="M 36 56 Q 40 48 44 56" fill="none" stroke="#F2FF00" strokeWidth="3" strokeLinecap="round" />
-                  <path d="M 56 56 Q 60 48 64 56" fill="none" stroke="#F2FF00" strokeWidth="3" strokeLinecap="round" />
-                </>
-              ) : (
-                <>
-                  <circle cx="40" cy="54" r="4" fill="#00F0FF" />
-                  <circle cx="60" cy="54" r="4" fill="#00F0FF" />
-                  <circle cx="41.5" cy="52.5" r="1.5" fill="#FFFFFF" />
-                  <circle cx="61.5" cy="52.5" r="1.5" fill="#FFFFFF" />
-                </>
-              )}
-
-              {/* Scarf / Tie Motif */}
-              <polygon points="50,70 44,82 56,82" fill="#FF3B30" />
-            </svg>
-
-            {/* Little Hazard Ribbon Badge */}
-            <div className="absolute bottom-0 inset-x-0 h-1.5 zzz-hazard-bar" />
-          </div>
-        </div>
+        <BangbooWidget
+          mood={bangboo.currentMood}
+          activeDialogue={
+            bangboo.activeDialogue || {
+              id: 'current',
+              bangbooText: bangbooDialogueText,
+              translation: bangbooSubtitleText,
+              mood: bangboo.currentMood,
+            }
+          }
+          preferences={settings.bangboo}
+          onPoke={handleBangbooPoke}
+        />
       )}
 
       {/* 6. JSON Backup & State Persistence Modal */}

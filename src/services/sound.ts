@@ -10,8 +10,8 @@
  * Fully offline, zero audio files required, headless/SSR safe.
  */
 
-const AUDIO_MUTED_KEY = 'zzztasks_audio_muted';
-const AUDIO_VOLUME_KEY = 'zzztasks_audio_volume';
+export const AUDIO_MUTED_KEY = 'zzztasks_audio_muted';
+export const AUDIO_VOLUME_KEY = 'zzztasks_audio_volume';
 
 export class SoundEngine {
   private ctx: AudioContext | null = null;
@@ -359,6 +359,91 @@ export class SoundEngine {
       osc.start(now);
       osc.stop(now + 0.2);
     } catch {}
+  }
+
+  /**
+   * Cheerful Bangboo Celebration Micro-Melody ("En-na na! ★")
+   * 4-note rapid staccato micro-fanfare: G5 -> C6 -> E6 -> G6
+   */
+  public playBangbooCheer(customVolume?: number): void {
+    if (!this.ensureReady()) return;
+
+    try {
+      const vol = (customVolume !== undefined ? customVolume : 0.65) * this.volume;
+      const now = this.ctx!.currentTime;
+      const notes = [783.99, 1046.5, 1318.51, 1567.98];
+
+      notes.forEach((freq, idx) => {
+        const startTime = now + idx * 0.06;
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.25 * vol, startTime + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+
+        osc.start(startTime);
+        osc.stop(startTime + 0.14);
+      });
+    } catch {}
+  }
+
+  /**
+   * Gentle Bangboo Sleepy Tone ("Zzz... En-nah...")
+   * Soft descending tone mimicking a cute mascot yawn or nap
+   */
+  public playBangbooSleep(customVolume?: number): void {
+    if (!this.ensureReady()) return;
+
+    try {
+      const vol = (customVolume !== undefined ? customVolume : 0.5) * this.volume;
+      const now = this.ctx!.currentTime;
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(260, now + 0.35);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18 * vol, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain!);
+
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } catch {}
+  }
+
+  /**
+   * Bangboo Vocal Router
+   */
+  public playBangbooVocal(
+    cue: 'chirp' | 'cheer' | 'chime' | 'sleep' | 'giggle' = 'chirp',
+    customVolume?: number
+  ): void {
+    switch (cue) {
+      case 'cheer':
+      case 'chime':
+        this.playBangbooCheer(customVolume);
+        break;
+      case 'sleep':
+        this.playBangbooSleep(customVolume);
+        break;
+      case 'chirp':
+      case 'giggle':
+      default:
+        this.playBangbooChirp(customVolume);
+        break;
+    }
   }
 }
 
